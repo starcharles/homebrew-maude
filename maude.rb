@@ -1,20 +1,55 @@
 class Maude < Formula
-  homepage "http://maude.cs.illinois.edu"
-  version "3.1"
-  url "http://maude.cs.illinois.edu/w/images/9/93/Maude-3.1-macos.zip"
-  sha256 "2d1ba91beba27c65ae0e72b8a0596962cd2f2d008ffdfab168a5aa9c3dc6320d"
+  desc "High-performance reflective language and system"
+  homepage "https://github.com/maude-lang/Maude"
+  version "3.5"
+  url "https://github.com/maude-lang/Maude/releases/download/Maude3.5/Maude-3.5-macos-arm64.zip"
+  sha256 "c656ff4495a35fc544c7905eae80d9179a4b806ecbe3f948a7305f6e31e250d0"
 
   def install
-    bin.install "file.maude"
-    bin.install "linear.maude"
-    bin.install "machine-int.maude"
-    bin.install "metaInterpreter.maude"
-    bin.install "model-checker.maude"
-    bin.install "prelude.maude"
-    bin.install "process.maude"
-    bin.install "smt.maude"
-    bin.install "socket.maude"
-    bin.install "term-order.maude"
-    bin.install "maude.darwin64" => "maude"
+    bin.install "maude" => "maude.orig"
+    
+    libexec.install "file.maude"
+    libexec.install "linear.maude"
+    libexec.install "machine-int.maude"
+    libexec.install "metaInterpreter.maude"
+    libexec.install "model-checker.maude"
+    libexec.install "prelude.maude"
+    libexec.install "prng.maude"
+    libexec.install "process.maude"
+    libexec.install "smt.maude"
+    libexec.install "socket.maude"
+    libexec.install "term-order.maude"
+    libexec.install "time.maude"
+    
+    libexec.install "maude.sty"
+    
+    # ラッパースクリプトを作成
+    (bin/"maude").write <<~EOS
+      #!/bin/bash
+      export MAUDE_LIB="#{libexec}"
+      exec "#{bin}/maude.orig" "$@"
+    EOS
+  end
+  
+  def caveats
+    <<~EOS
+      Maude has been installed with library files in:
+        #{libexec}
+
+      The MAUDE_LIB environment variable is automatically set when running maude.
+    EOS
+  end
+  
+  test do
+    (testpath/"test.maude").write <<~EOS
+      fmod TEST is
+        sort Nat .
+        op zero : -> Nat .
+        op s : Nat -> Nat .
+      endfm
+      quit .
+    EOS
+    
+    assert_match "Bye", shell_output("#{bin}/maude test.maude")
   end
 end
